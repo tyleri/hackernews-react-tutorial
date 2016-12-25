@@ -6,9 +6,6 @@ const PATH_BASE = "https://hn.algolia.com/api/v1";
 const PATH_SEARCH = "/search";
 const PARAM_SEARCH = "query=";
 
-const isSearched = (query) => (item) => 
-  !query || item.title.toLowerCase().indexOf(query.toLowerCase()) !== -1;
-
 class App extends Component {
 
   constructor(props) {
@@ -20,14 +17,19 @@ class App extends Component {
     };
   }
 
-  onSearchChange = event => this.setState({ query: event.target.value });
-  
   setSearchTopstories = result => this.setState({ result });
 
   fetchSearchTopstories = query =>
-    fetch(`{PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${query}`)
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${query}`)
       .then(response => response.json())
       .then(result => this.setSearchTopstories(result));
+
+  onSearchChange = event => this.setState({ query: event.target.value });
+
+  onSearchSubmit = event => {
+    this.fetchSearchTopstories(this.state.query);
+    event.preventDefault();
+  }
 
   componentDidMount = () => this.fetchSearchTopstories(this.state.query)
 
@@ -36,24 +38,27 @@ class App extends Component {
     return (
       <div className="page">
         <div className="interactions">
-          <Search value={query} onChange={this.onSearchChange}>
+          <Search value={query}
+                  onChange={this.onSearchChange}
+                  onSubmit={this.onSearchSubmit}>
             Search
           </Search>
         </div>
-        { result ? <Table list={result.hits} pattern={query} /> : null }
+        { result && <Table list={result.hits} pattern={query} /> }
       </div>
     );
   }
 }
 
-const Search = ({ value, onChange, children }) =>
-  <form>
-    {children} <input type="text" value={value} onChange={onChange} />
+const Search = ({ value, onChange, onSubmit, children }) =>
+  <form onSubmit={onSubmit}>
+    <input type="text" value={value} onChange={onChange} />
+    <button type="submit">{children}</button>
   </form>
 
-const Table = ({ list, pattern }) =>
+const Table = ({ list }) =>
   <div className="table">
-    { list.filter(isSearched(pattern)).map( item =>
+    { list.map( item =>
       <div key={item.objectID} className="table-row">
         <span style={{ width: '40%' }}><a href={item.url}>{item.title}</a></span>
         <span style={{ width: '30%' }}>{item.author}</span>
