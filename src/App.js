@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import './App.css';
 
 const DEFAULT_QUERY = "redux";
+const DEFAULT_PAGE = 0;
 const PATH_BASE = "https://hn.algolia.com/api/v1";
 const PATH_SEARCH = "/search";
 const PARAM_SEARCH = "query=";
+const PARAM_PAGE = "page=";
 
 class App extends Component {
 
@@ -17,24 +19,31 @@ class App extends Component {
     };
   }
 
-  setSearchTopstories = result => this.setState({ result });
+  setSearchTopstories = result => {
+    const { hits, page } = result;
+    const oldHits = page === 0 ? [] : this.state.result.hits;
+    const updatedHits = [ ...oldHits, ...hits ];
+    this.setState({ result: {hits: updatedHits, page} });
+  }
 
-  fetchSearchTopstories = query =>
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${query}`)
+  fetchSearchTopstories = (query, page) =>
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${query}&${PARAM_PAGE}${page}`)
       .then(response => response.json())
       .then(result => this.setSearchTopstories(result));
 
   onSearchChange = event => this.setState({ query: event.target.value });
 
   onSearchSubmit = event => {
-    this.fetchSearchTopstories(this.state.query);
+    this.fetchSearchTopstories(this.state.query, DEFAULT_PAGE);
     event.preventDefault();
   }
 
-  componentDidMount = () => this.fetchSearchTopstories(this.state.query)
+  componentDidMount = () =>
+    this.fetchSearchTopstories(this.state.query, DEFAULT_PAGE)
 
   render() {
     const { query, result } = this.state;
+    const page = (result && result.page) || 0;
     return (
       <div className="page">
         <div className="interactions">
@@ -45,6 +54,11 @@ class App extends Component {
           </Search>
         </div>
         { result && <Table list={result.hits} pattern={query} /> }
+        <div className="interactions">
+          <Button onClick={() => this.fetchSearchTopstories(query, page + 1)}>
+            More
+          </Button>
+        </div>
       </div>
     );
   }
@@ -67,5 +81,10 @@ const Table = ({ list }) =>
       </div>
     ) }
   </div>
+
+const Button = ({ onClick, children }) =>
+  <button onClick={onClick} type="button">
+    {children}
+  </button>
 
 export default App;
