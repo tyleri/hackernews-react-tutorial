@@ -71,7 +71,7 @@ class App extends Component {
         <Table list={list} />
         <div className="interactions">
           <Button onClick={() => this.fetchSearchTopstories(searchKey, page + 1)}>
-            More
+            More Results
           </Button>
         </div>
       </div>
@@ -103,3 +103,9 @@ const Button = ({ onClick, children }) =>
   </button>
 
 export default App;
+
+export {
+  Button,
+  Search,
+  Table
+};
